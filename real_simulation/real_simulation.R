@@ -2,7 +2,7 @@
 ## Compute FDR and Power of all methods across 10 replicates
 
 library(SPARK)
-library(RepEM)
+library(STAREG)
 library(ggplot2)
 
 source('funcs/SimuFunc.R')
@@ -20,7 +20,7 @@ xi10 = 0.05
 xi11 = 0.05
 alphas = seq(0, 0.1, 0.01)
 
-methods <- c("MaxP", "BH", "RepEM")
+methods <- c("MaxP", "BH", "STAREG")
 
 data.obj <- list()
 res <- list()
@@ -60,8 +60,8 @@ for (i in 1: n.rep){
   maxp <- apply(cbind(pvals1, pvals2), 1, max)
   pvals.maxp <- p.adjust(maxp, method = "BH")
   
-  # RepEM
-  res.rep <- RepEM(pvals1, pvals2)
+  # STAREG
+  res.rep <- STAREG(pvals1, pvals2)
   pvals.rep <- res.rep$fdr.rep
   
   for(j in 1:length(alphas)){
@@ -75,9 +75,9 @@ for (i in 1: n.rep){
     res$MaxP$fdp[i,j] <- sum(pvals.maxp <= alpha & !truth)/ max(sum(pvals.maxp <= alpha), 1)
     res$MaxP$pd[i,j]  <- sum(pvals.maxp <= alpha & truth) / sum(truth)
     
-    # RepEM
-    res$RepEM$fdp[i,j] <- sum(pvals.rep <= alpha & !truth)/max(sum(pvals.rep <= alpha), 1)
-    res$RepEM$pd[i,j] <- sum(pvals.rep <= alpha & truth) / sum(truth)
+    # STAREG
+    res$STAREG$fdp[i,j] <- sum(pvals.rep <= alpha & !truth)/max(sum(pvals.rep <= alpha), 1)
+    res$STAREG$pd[i,j] <- sum(pvals.rep <= alpha & truth) / sum(truth)
   }
 }
 
@@ -89,26 +89,26 @@ for (k in 1:length(methods)){
 ##------------------------------------------------------------------------------
 ## FDR plot
 ##------------------------------------------------------------------------------
-fdr.RepEM <- as.data.frame(cbind(alpha = alphas, fdr = res$RepEM$fdr))
+fdr.STAREG <- as.data.frame(cbind(alpha = alphas, fdr = res$STAREG$fdr))
 fdr.MaxP <- as.data.frame(cbind(alpha = alphas, fdr = res$MaxP$fdr))
 fdr.BH <- as.data.frame(cbind(alpha = alphas, fdr = res$BH$fdr))
 
 fdr.BH$method <- "BH"
 fdr.MaxP$method <- "MaxP"
-fdr.RepEM$method <- "RepEM"
+fdr.STAREG$method <- "STAREG"
 
-res.fdr <- rbind(fdr.RepEM, fdr.MaxP, fdr.BH)
+res.fdr <- rbind(fdr.STAREG, fdr.MaxP, fdr.BH)
 
 # 4*4.2 inches
 ggplot(res.fdr, aes(alpha, fdr, group = method, color = method, shape = method)) +
   scale_colour_manual(name="",
-                      values = c("MaxP"="#6496D2", "BH"="#F4B183", "RepEM"="#8FBC8F")) +
+                      values = c("MaxP"="#6496D2", "BH"="#F4B183", "STAREG"="#8FBC8F")) +
   scale_x_continuous(limits = c(0, 0.1), breaks = seq(0,0.1,0.02)) +
   scale_y_continuous(limits = c(0, 0.16), breaks = seq(0,0.16,0.02)) +
   geom_line(size = 1.5) + xlab("Target FDR level") + ylab("Empirical FDR") +
   theme_bw() +
   geom_abline(intercept = 0, slope = 1, colour = "#44546A", size = 1, linetype = 2) +
-  theme(legend.position = "none", # legend.position = c(0.01,1.03)
+  theme(legend.position = c(0.01,1.03),  # legend.position = "none"
         panel.border = element_blank(),
         axis.title.x = element_text(size = 16),
         axis.title.y = element_text(size = 16),
@@ -121,21 +121,21 @@ ggplot(res.fdr, aes(alpha, fdr, group = method, color = method, shape = method))
 ##------------------------------------------------------------------------------
 ## Power plot
 ##------------------------------------------------------------------------------
-pwr.RepEM <- as.data.frame(cbind(alpha = alphas, pwr = res$RepEM$pwr))
+pwr.STAREG <- as.data.frame(cbind(alpha = alphas, pwr = res$STAREG$pwr))
 pwr.MaxP <- as.data.frame(cbind(alpha = alphas, pwr = res$MaxP$pwr))
 pwr.BH <- as.data.frame(cbind(alpha = alphas, pwr = res$BH$pwr))
 
 pwr.BH$method <- "BH"
 pwr.MaxP$method <- "MaxP"
-pwr.RepEM$method <- "RepEM"
+pwr.STAREG$method <- "STAREG"
 
-res.pwr <- rbind(pwr.RepEM, pwr.MaxP, pwr.BH)
+res.pwr <- rbind(pwr.STAREG, pwr.MaxP, pwr.BH)
 
 library(ggplot2)
 # 4*4.2 inches
 ggplot(res.pwr, aes(alpha, pwr, group = method, color = method, shape = method)) +
   scale_colour_manual(name="",
-                      values = c("MaxP"="#6496D2", "BH"="#F4B183", "RepEM"="#8FBC8F")) +
+                      values = c("MaxP"="#6496D2", "BH"="#F4B183", "STAREG"="#8FBC8F")) +
   scale_x_continuous(limits = c(0, 0.1), breaks = seq(0,0.1,0.02)) +
   scale_y_continuous(limits = c(0, 1), breaks = seq(0,1,0.1)) +
   geom_line(size = 1.5) + xlab("Target FDR level") + ylab("Power") +

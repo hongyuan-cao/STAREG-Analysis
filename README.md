@@ -1,11 +1,11 @@
-# RepEM-Analysis
+# STAREG-Analysis
  All scripts performed in our experiments for replicability analysis of SVG detection.
 
 
 
 ## Overview
 
-RepEM implements an efficient FDR control procedure for replicability analysis of large-scale multiple testing. The framework is built for the replicability analysis of spatial variable gene (SVG) detection in spatial transcriptomic (SRT) data,  and is scalable for a wide range of other applications. Following the optimal rejection rule based on local FDR, we estimate the joint local FDR based on the replicability null hypotheses with a robust EM algorithm, and then use the estimated local FDR as test statistics to achieve effective FDR control. The inputs of RepEM are simply the $p$-values resulted from two replicated studies for the same hypotheses.
+STAREG implements an efficient FDR control procedure for replicability analysis of large-scale multiple testing. The framework is built for the replicability analysis of spatial variable gene (SVG) detection in spatial transcriptomic (SRT) data,  and is scalable for a wide range of other applications. Following the optimal rejection rule based on local FDR, we estimate the joint local FDR based on the replicability null hypotheses with a robust EM algorithm, and then use the estimated local FDR as test statistics to achieve effective FDR control. The inputs of STAREG are simply the $p$-values resulted from two replicated studies for the same hypotheses.
 
 ## Installation
 
@@ -16,12 +16,12 @@ if (!require("BiocManager", quietly = TRUE))
 BiocManager::install("qvalue")
 install.packages(c("Iso"))
 
-## Install RepEM
+## Install STAREG
 install.packages("devtools")
-devtools::install_github("YanLi15/RepEM")
+devtools::install_github("YanLi15/STAREG")
 
-## Load RepEM
-library(RepEM)
+## Load STAREG
+library(STAREG)
 ```
 
 ## An analysis example
@@ -74,12 +74,12 @@ pvals1 = p1[overlap]
 pvals2 = p2[overlap]
 ```
 
-Make replicability analysis of the two studies using RepEM, and output the replicable SVGs across the two SRT studies from mouse olfactory bulb.
+Make replicability analysis of the two studies using STAREG, and output the replicable SVGs across the two SRT studies from mouse olfactory bulb.
 
 ```R
-library(RepEM)
+library(STAREG)
 alpha <- 0.05
-rep.obj <- RepEM(pvals1, pvals2)
+rep.obj <- STAREG(pvals1, pvals2)
 rep.svgs <- overlap[which(rep.obj$fdr.rep <= alpha)]
 ```
 

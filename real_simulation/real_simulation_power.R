@@ -1,5 +1,5 @@
 library(SPARK)
-library(RepEM)
+library(STAREG)
 library(ggplot2)
 
 source('./funcs/SimuFunc.R')
@@ -43,8 +43,8 @@ padj2.bh <- p.adjust(p2, method = 'BH')
 maxp <- apply(cbind(p1, p2), 1, max)
 padj.maxp <- p.adjust(maxp, method = "BH")
 
-# RepEM
-res.rep <- RepEM(p1, p2, trace = FALSE)
+# STAREG
+res.rep <- STAREG(p1, p2, trace = FALSE)
 padj.rep <- res.rep$fdr.rep
 f1.rep = res.rep$f1
 f2.rep = res.rep$f2
@@ -64,13 +64,13 @@ rroc.rep <- as.data.frame(rroc.rep)
 
 rroc.bh$method <- "BH"
 rroc.maxp$method <- "MaxP"
-rroc.rep$method <- "RepEM"
+rroc.rep$method <- "STAREG"
 
 res <- rbind(rroc.maxp, rroc.bh, rroc.rep)
 
 ggplot(res, aes(fdr,tpr, group = method, color = method, shape = method)) +
   scale_colour_manual(name="",
-                      values = c("MaxP"="#6496D2", "BH"="#F4B183", "RepEM"="#8FBC8F")) +
+                      values = c("MaxP"="#6496D2", "BH"="#F4B183", "STAREG"="#8FBC8F")) +
   scale_x_continuous(limits = c(0, 1)) +
   scale_y_continuous(limits = c(0, 1)) +
   geom_line(size = 1.5) + xlab("FDR") + ylab("Power") +
