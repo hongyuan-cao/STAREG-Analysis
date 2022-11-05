@@ -17,7 +17,7 @@ MI1 = stat.res1$MI
 mi_all <- MI1[overlap]
 mi_repem_only <- MI1[genes.repem.only]
 
-factor <- factor(rep(c("RepEM only", "All (10X)"), 
+factor <- factor(rep(c("STAREG only", "All (10X)"), 
                      times = c(length(genes.repem.only),length(overlap))))
 dataset <- data.frame(value = c(mi_repem_only, mi_all), group = factor)
 par(mar = c(4, 4.5, 1, 1))
@@ -29,7 +29,7 @@ MI2 = stat.res2$MI
 mi_all <- MI2[overlap]
 mi_repem_only <- MI2[genes.repem.only]
 
-factor <- factor(rep(c("RepEM only", "All (ST)"), 
+factor <- factor(rep(c("STAREG only", "All (ST)"), 
                      times = c(length(genes.repem.only),length(overlap))))
 dataset <- data.frame(value = c(mi_repem_only, mi_all), group = factor)
 par(mar = c(4, 4.5, 1, 1))
@@ -44,7 +44,7 @@ library(amap)
 source("./funcs/PlotFuncs.R")
 
 genes.overlap    <- intersect(genes_rep_repem, genes_rep_bh) 
-genes.repem.only  <- genes_rep_repem[!genes_rep_repem%in%genes.overlap] # SVGs only identified by RepEM 
+genes.repem.only  <- genes_rep_repem[!genes_rep_repem%in%genes.overlap] # SVGs only identified by STAREG 
 
 ## Sumaarized patterns for ST data
 vst_count <- var_stabilize(spark2@counts) # R function in funcs.R
@@ -269,7 +269,7 @@ go.bh <- enrichGO(gene          = genes.bh$ENTREZID,
                   pool=TRUE)
 sum(go.bh$p.adjust<0.05)  # 532
 
-## GO enrichment of RepEM
+## GO enrichment of STAREG
 genes.repem <- bitr(genes_rep_repem, fromType = "SYMBOL", toType = c("ENTREZID"), OrgDb = org.Hs.eg.db)
 go.repem <- enrichGO(gene          = genes.repem$ENTREZID,
                      universe      = genes.all$ENTREZID,

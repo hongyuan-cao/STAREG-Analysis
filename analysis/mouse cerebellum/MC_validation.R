@@ -7,8 +7,8 @@ load("./output/MC_results.RData")
 ##----------------------------------------------------------
 source("./funcs/ValidationFuncs.R")
 
-## SVGs identified by RepEM but not by BH
-genes.overlap    <- intersect(genes_rep_repem, genes_rep_bh) # overlap between RepEM and BH
+## SVGs identified by STAREG but not by BH
+genes.overlap    <- intersect(genes_rep_repem, genes_rep_bh) # overlap between STAREG and BH
 genes.repem.only  <- genes_rep_repem[!genes_rep_repem%in%genes.overlap]
 
 # Slide-seq
@@ -17,7 +17,7 @@ MI1 <- stat.res1$MI
 mi_all1 <- MI1[overlap]
 mi_repem_only1 <- MI1[genes.repem.only]
 
-factor <- factor(rep(c("RepEM only", "All (Slide-seq)"),
+factor <- factor(rep(c("STAREG only", "All (Slide-seq)"),
                      times = c(length(genes.repem.only),length(overlap))))
 dataset1 <- data.frame(value = c(mi_repem_only1, mi_all1), group = factor)
 par(mar = c(4, 4.5, 1, 1))
@@ -31,7 +31,7 @@ MI2 <- stat.res2$MI
 mi_all2 <- MI2[overlap]
 mi_repem_only2 <- MI2[genes.repem.only]
 
-factor <- factor(rep(c("RepEM only", "All (Slide-seqV2)"),
+factor <- factor(rep(c("STAREG only", "All (Slide-seqV2)"),
                      times = c(length(genes.repem.only),length(overlap))))
 dataset2 <- data.frame(value = c(mi_repem_only2, mi_all2), group = factor)
 par(mar = c(4, 4.5, 1, 1))
@@ -189,7 +189,7 @@ library(ggrepel)
 genes.repem.only <- genes_rep_repem[!genes_rep_repem%in%genes_rep_bh]
 
 genes.all <- bitr(overlap, fromType = "SYMBOL", toType = c("ENTREZID"), OrgDb = org.Mm.eg.db)
-genes.overlap    <- intersect(genes_rep_repem, genes_rep_bh) # overlap between RepEM and BH
+genes.overlap    <- intersect(genes_rep_repem, genes_rep_bh) # overlap between STAREG and BH
 genes.repem.only  <- genes_rep_repem[!genes_rep_repem%in%genes.overlap]
 genes_repem_only <- bitr(genes.repem.only, fromType = "SYMBOL", toType = c("ENTREZID"), OrgDb = org.Mm.eg.db)
 
@@ -277,7 +277,7 @@ ggplot(don, aes(x = BPcum, y=-log10(pvalue))) +
 R.utils::setOption( "clusterProfiler.download.method",'auto')
 library(cowplot)
 
-genes.overlap    <- intersect(genes_rep_repem, genes_rep_bh) # overlap between RepEM and BH
+genes.overlap    <- intersect(genes_rep_repem, genes_rep_bh) # overlap between STAREG and BH
 genes.repem.only  <- genes_rep_repem[!genes_rep_repem%in%genes.overlap]
 genes_repem_only <- bitr(genes.repem.only, fromType = "SYMBOL", toType = c("ENTREZID"), OrgDb = org.Mm.eg.db)
 kegg.repem.only <- enrichKEGG(gene         = genes_repem_only$ENTREZID,

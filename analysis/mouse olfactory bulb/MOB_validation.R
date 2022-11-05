@@ -17,7 +17,7 @@ MI1 <- stat.res1$MI
 mi_all1 <- MI1[overlap]
 mi_repem_only1 <- MI1[genes.repem.only]
 
-factor <- factor(rep(c("RepEM only", "All (Rep1)"), 
+factor <- factor(rep(c("STAREG only", "All (Rep1)"), 
                      times = c(length(genes.repem.only),length(overlap))))
 dataset1 <- data.frame(value = c(mi_repem_only1, mi_all1), group = factor)
 par(mar = c(3, 4.5, 1, 1))
@@ -31,7 +31,7 @@ MI2 <- stat.res2$MI
 mi_all2 <- MI2[overlap]
 mi_repem_only2 <- MI2[genes.repem.only]
 
-factor <- factor(rep(c("RepEM only", "All (Rep8)"), 
+factor <- factor(rep(c("STAREG only", "All (Rep8)"), 
                      times = c(length(genes.repem.only),length(overlap))))
 dataset2 <- data.frame(value = c(mi_repem_only2, mi_all2), group = factor)
 par(mar = c(3, 4.5, 1, 1))
@@ -87,7 +87,7 @@ genes.repem.only  <- genes_rep_repem[!genes_rep_repem%in%genes.overlap]
 randi <- sample(length(genes.repem.only), 20, replace = FALSE)
 gene_plot <- genes.repem.only[randi]
 
-# gene_plot <- c("Slc6a13", "Cbln4", "Clip4") # three representative SVGs only identified by RepEM
+# gene_plot <- c("Slc6a13", "Cbln4", "Clip4") # three representative SVGs only identified by STAREG
 
 # Rep1
 vst_ct <- var_stabilize(counts1) # R function in funcs.R

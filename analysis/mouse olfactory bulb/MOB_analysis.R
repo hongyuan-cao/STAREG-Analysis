@@ -13,8 +13,8 @@ overlap <- intersect(names(p1),names(p2))
 pvals1 = p1[overlap]
 pvals2 = p2[overlap]
 
-library(RepEM)
-rep.obj <- RepEM(pvals1, pvals2)
+library(STAREG)
+rep.obj <- STAREG(pvals1, pvals2)
 genes_rep_repem <- overlap[which(rep.obj$fdr.rep<=alpha)]
 
 # BY method
@@ -40,7 +40,7 @@ genes_rep_maxp <- overlap[which(maxp.bh<=alpha)]
 library(VennDiagram)
 venn.diagram(
   x = list(genes_rep_repem, genes_rep_bh, genes_rep_maxp),
-  category.names = c("RepEM", "BH", "MaxP"),
+  category.names = c("STAREG", "BH", "MaxP"),
   fill = c("#E69F00", "coral", "#63769d"),
   filename = 'output/venn_MOB(Rep1+Rep8).tiff',
   output = TRUE,
