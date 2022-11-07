@@ -73,7 +73,7 @@ ggplot(res, aes(fdr,tpr, group = method, color = method, shape = method)) +
                       values = c("MaxP"="#6496D2", "BH"="#F4B183", "STAREG"="#8FBC8F")) +
   scale_x_continuous(limits = c(0, 1)) +
   scale_y_continuous(limits = c(0, 1)) +
-  geom_line(size = 1.5) + xlab("FDR") + ylab("Power") +
+  geom_line(size = 1.5) + xlab("Empirical FDR") + ylab("Power") +
   theme_bw() +
   geom_abline(intercept = 0, slope = 1, colour = "#44546A", size = 1, linetype = 2) +
   theme(legend.position = "none", # legend.position = c(0.01,1.03)
