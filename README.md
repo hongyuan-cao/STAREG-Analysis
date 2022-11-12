@@ -18,7 +18,7 @@ install.packages(c("Iso"))
 
 ## Install STAREG
 install.packages("devtools")
-devtools::install_github("YanLi15/STAREG")
+devtools::install_github("hongyuan-cao/STAREG")
 
 ## Load STAREG
 library(STAREG)
