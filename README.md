@@ -1,11 +1,5 @@
 # STAREG-Analysis
- All scripts performed in our experiments for replicability analysis of SVG detection.
-
-
-
-## Overview
-
-STAREG implements an efficient FDR control procedure for replicability analysis of large-scale multiple testing. The framework is built for the replicability analysis of spatial variable gene (SVG) detection in spatial transcriptomic (SRT) data,  and is scalable for a wide range of other applications. Following the optimal rejection rule based on local FDR, we estimate the joint local FDR based on the replicability null hypotheses with a robust EM algorithm, and then use the estimated local FDR as test statistics to achieve effective FDR control. The inputs of STAREG are simply the $p$-values resulted from two replicated studies for the same hypotheses.
+ All scripts performed in our experiments for replicability analysis of spatially variable gene detection.
 
 ## Installation
 
