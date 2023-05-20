@@ -56,7 +56,7 @@ memb1 <- cutree(hc1, k = numC)
 # The mean residuals of the three patterns for each location
 cent1 <- NULL
 for (k in 1:numC) {
-  cent <- cbind(cent1, colMeans(sig_vst_res1[memb1 == k, , drop = FALSE]))
+  cent1 <- cbind(cent1, colMeans(sig_vst_res1[memb1 == k, , drop = FALSE]))
 }
 location1_rev <- location1
 location1_rev$y <- -location1$y
