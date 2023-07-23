@@ -73,8 +73,8 @@ Make replicability analysis of the two studies using STAREG, and output the repl
 ```R
 library(STAREG)
 alpha <- 0.05
-rep.obj <- STAREG(pvals1, pvals2)
-rep.svgs <- overlap[which(rep.obj$fdr.rep <= alpha)]
+rep.obj <- stareg(pvals1, pvals2)
+rep.svgs <- overlap[which(rep.obj$fdr <= alpha)]
 ```
 
 ## Data and reproducibility
