@@ -14,8 +14,8 @@ pvals1 = p1[overlap]
 pvals2 = p2[overlap]
 
 library(STAREG)
-rep.obj <- STAREG(pvals1, pvals2)
-genes_rep_repem <- overlap[which(rep.obj$fdr.rep<=alpha)]
+rep.obj <- stareg(pvals1, pvals2)
+genes_rep_repem <- overlap[which(rep.obj$fdr<=alpha)]
 
 # BY method
 p1.by <- p.adjust(pvals1, method = 'BY')

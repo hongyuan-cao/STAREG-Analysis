@@ -61,8 +61,8 @@ for (i in 1: n.rep){
   pvals.maxp <- p.adjust(maxp, method = "BH")
   
   # STAREG
-  res.rep <- STAREG(pvals1, pvals2)
-  pvals.rep <- res.rep$fdr.rep
+  res.rep <- stareg(pvals1, pvals2)
+  pvals.rep <- res.rep$fdr
   
   for(j in 1:length(alphas)){
     alpha = alphas[j]
