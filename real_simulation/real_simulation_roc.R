@@ -44,7 +44,7 @@ maxp <- apply(cbind(p1, p2), 1, max)
 padj.maxp <- p.adjust(maxp, method = "BH")
 
 # STAREG
-res.rep <- stareg(p1, p2)
+res.rep <- stareg(p1, p2, init.pi0 = FALSE)
 padj.rep <- res.rep$fdr
 f1.rep = res.rep$f1
 f2.rep = res.rep$f2
