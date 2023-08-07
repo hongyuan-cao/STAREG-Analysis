@@ -8,18 +8,18 @@ load("./output/MC_results.RData")
 source("./funcs/ValidationFuncs.R")
 
 ## SVGs identified by STAREG but not by BH
-genes.overlap    <- intersect(genes_rep_repem, genes_rep_bh) # overlap between STAREG and BH
-genes.repem.only  <- genes_rep_repem[!genes_rep_repem%in%genes.overlap]
+genes.overlap <- unique(c(genes_rep_maxp, genes_rep_bh, genes_rep_jump, genes_rep_marr, genes_rep_radjust))
+genes.stareg.only <- genes_rep_stareg[!genes_rep_stareg%in%genes.overlap]
 
 # Slide-seq
 stat.res1 <- corrValue(counts1, location1[,2:3])
 MI1 <- stat.res1$MI
 mi_all1 <- MI1[overlap]
-mi_repem_only1 <- MI1[genes.repem.only]
+mi_stareg_only1 <- MI1[genes.stareg.only]
 
 factor <- factor(rep(c("STAREG only", "All (Slide-seq)"),
-                     times = c(length(genes.repem.only),length(overlap))))
-dataset1 <- data.frame(value = c(mi_repem_only1, mi_all1), group = factor)
+                     times = c(length(genes.stareg.only),length(overlap))))
+dataset1 <- data.frame(value = c(mi_stareg_only1, mi_all1), group = factor)
 par(mar = c(4, 4.5, 1, 1))
 boxplot(value ~ group, dataset1, col = c("antiquewhite1", "lightseagreen"),
         xlab = NULL, ylab = "Moran's I statistics",outline = FALSE,
@@ -29,11 +29,11 @@ boxplot(value ~ group, dataset1, col = c("antiquewhite1", "lightseagreen"),
 stat.res2 <- corrValue(counts2, location2)
 MI2 <- stat.res2$MI
 mi_all2 <- MI2[overlap]
-mi_repem_only2 <- MI2[genes.repem.only]
+mi_stareg_only2 <- MI2[genes.stareg.only]
 
 factor <- factor(rep(c("STAREG only", "All (Slide-seqV2)"),
-                     times = c(length(genes.repem.only),length(overlap))))
-dataset2 <- data.frame(value = c(mi_repem_only2, mi_all2), group = factor)
+                     times = c(length(genes.stareg.only),length(overlap))))
+dataset2 <- data.frame(value = c(mi_stareg_only2, mi_all2), group = factor)
 par(mar = c(4, 4.5, 1, 1))
 boxplot(value ~ group, dataset2, col = c("antiquewhite1", "lightseagreen"),
         xlab = NULL, ylab = "Moran's I statistics",outline = FALSE,
@@ -47,7 +47,7 @@ source("./funcs/PlotFuncs.R")
 
 # Slide-seq
 vst_ct1 <- var_stabilize(counts1[overlap,]) 
-sig_vst_count1 <- vst_ct1[genes_rep_repem, ]
+sig_vst_count1 <- vst_ct1[genes_rep_stareg, ]
 sig_vst_res1 <- t(apply(sig_vst_count1, 1, LMReg, T = log(apply(counts1[overlap,], 2, sum))))
 hc1 <- hcluster(sig_vst_res1, method = "euc", link = "ward", nbproc = 1,
                 doubleprecision = TRUE)
@@ -73,7 +73,7 @@ grid.arrange(grobs = MBP1[1:3], nrow = 3)
 
 ## Slide-seqV2
 vst_ct2 <- var_stabilize(counts2[overlap,]) # R function in funcs.R
-sig_vst_count2 <- vst_ct2[genes_rep_repem, ]
+sig_vst_count2 <- vst_ct2[genes_rep_stareg, ]
 sig_vst_res2 <- t(apply(sig_vst_count2, 1, LMReg, T = log(apply(counts2[overlap,], 2, sum))))
 
 hc2 <- hcluster(sig_vst_res2, method = "euc", link = "ward", nbproc = 1,
@@ -103,10 +103,10 @@ grid.arrange(grobs = MBP2[numC:1], nrow = 3)
 ##--------------------------------------------------------------------
 source("./funcs/PlotFuncs.R")
 
-randi <- sample(length(genes.repem.only), 10, replace = FALSE)
-gene_plot <- genes.repem.only[randi]
-# "Ppp1r17", "Luc7l3", "Atp6v1g2", "Chchd2", "2010107E04Rik", "App", "Malat1", "Cox8a", "Mtss1", "Meg3"
-# gene_plot <- c("Meg3", "Ppp1r17") # two representative genes for the main patterns
+randi <- sample(length(genes_rep_stareg), 10, replace = FALSE)
+gene_plot <- genes_rep_stareg[randi]
+# "Scn2a1", "Actb", "1700020I14Rik", "Ppp1r17", "Luc7l3", "Atp6v1g2", "Cox8a", "Mtss1", "Ank2", "Rgs7bp"
+# gene_plot <- c("Slc4a4", "Ppp1r17") # two representative genes for the main patterns
 
 ## Slide-seq
 vst_ct1 <- var_stabilize(counts1[overlap,]) 
@@ -137,7 +137,10 @@ grid.arrange(grobs=pp, nrow=2)
 ##--------------------------------------------------------------------
 library(readxl)
 bh.only    <- genes_rep_bh[!genes_rep_bh%in%genes_rep_maxp]
-repem.only <- genes_rep_repem[!genes_rep_repem%in%genes_rep_maxp]
+radjust.only <- genes_rep_radjust[!genes_rep_radjust%in%genes_rep_maxp]
+jump.only <- genes_rep_jump[!genes_rep_jump%in%genes_rep_maxp]
+marr.only <- genes_rep_marr[!genes_rep_marr%in%genes_rep_maxp]
+stareg.only <- genes_rep_stareg[!genes_rep_stareg%in%genes_rep_maxp]
 
 ## Genes related to the cerebellum in Harmonizome database (2431)
 library(rjson)
@@ -156,12 +159,13 @@ Harmonizome.genes <- Harmonizome.genes[!duplicated(Harmonizome.genes)]
 Harmonizome.genes <- tolower(Harmonizome.genes)
 Harmonizome.genes <- str_to_title(Harmonizome.genes) 
 
-length(intersect(genes_rep_maxp, Harmonizome.genes)) # 89/286
-length(intersect(genes_rep_bh, Harmonizome.genes)) # 137/476
-length(intersect(genes_rep_repem, Harmonizome.genes)) # 231/844
+length(intersect(genes_rep_maxp, Harmonizome.genes)) # 89/286 31.12%
 
-length(intersect(bh.only, Harmonizome.genes)) # 48/190
-length(intersect(repem.only, Harmonizome.genes)) # 142/558
+length(intersect(bh.only, Harmonizome.genes)) # 48/190 25.26%
+length(intersect(radjust.only, Harmonizome.genes)) # 47/187 25.13%
+length(intersect(jump.only, Harmonizome.genes)) # 39/168 23.21%
+length(intersect(marr.only, Harmonizome.genes)) # 15/129 11.63%
+length(intersect(stareg.only, Harmonizome.genes)) # 149/589 25.30%
 
 
 ## Kozareva et al.
@@ -169,12 +173,13 @@ cluster_genes <- read_xlsx("./validation/mouse cerebellum/Kozareva et al.xlsx", 
 cluster_genes = cluster_genes[which(abs(cluster_genes$logFC)>=1.5),] 
 cluster_genes = as.vector(unique(cluster_genes$gene)) # 955
 
-length(intersect(genes_rep_maxp, cluster_genes)) # 85/286
-length(intersect(genes_rep_bh, cluster_genes)) # 117/476
-length(intersect(genes_rep_repem, cluster_genes)) # 185/844
+length(intersect(genes_rep_maxp, cluster_genes)) # 85/286 29.72%
 
-length(intersect(bh.only, cluster_genes)) # 32/190
-length(intersect(repem.only, cluster_genes)) # 100/558
+length(intersect(bh.only, cluster_genes)) # 32/190 16.84%
+length(intersect(radjust.only, cluster_genes)) # 31/187 16.58%
+length(intersect(jump.only, cluster_genes)) # 22/168 13.10%
+length(intersect(marr.only, cluster_genes)) # 13/129 10.08%
+length(intersect(stareg.only, cluster_genes)) # 105/589 17.83%
 
 ##--------------------------------------------------------------------
 ## GO enrichment
@@ -186,14 +191,10 @@ library(ggplot2)
 library(ggrepel)
 # options(connectionObserver = NULL) # run if library(org.Mm.eg.db) failed
 
-genes.repem.only <- genes_rep_repem[!genes_rep_repem%in%genes_rep_bh]
-
 genes.all <- bitr(overlap, fromType = "SYMBOL", toType = c("ENTREZID"), OrgDb = org.Mm.eg.db)
-genes.overlap    <- intersect(genes_rep_repem, genes_rep_bh) # overlap between STAREG and BH
-genes.repem.only  <- genes_rep_repem[!genes_rep_repem%in%genes.overlap]
-genes_repem_only <- bitr(genes.repem.only, fromType = "SYMBOL", toType = c("ENTREZID"), OrgDb = org.Mm.eg.db)
+genes_stareg_only <- bitr(genes.stareg.only, fromType = "SYMBOL", toType = c("ENTREZID"), OrgDb = org.Mm.eg.db)
 
-go.repem.only <- enrichGO(gene          = genes_repem_only$ENTREZID,
+go.stareg.only <- enrichGO(gene          = genes_stareg_only$ENTREZID,
                           universe      = genes.all$ENTREZID,
                           OrgDb         = org.Mm.eg.db,
                           ont           = "All" ,
@@ -202,11 +203,10 @@ go.repem.only <- enrichGO(gene          = genes_repem_only$ENTREZID,
                           qvalueCutoff  = 0.99,
                           readable      = TRUE,
                           pool=TRUE)
-sum(go.repem.only$p.adjust<0.05) # 271
-sig.go <- filter(go.repem.only, p.adjust<.05)
-write.csv(go.repem.only,file = "./output/MC_go_repem_only.csv",quote = FALSE)
+sum(go.stareg.only$p.adjust<0.05) # 271
+write.csv(go.stareg.only,file = "./output/MC_go_stareg_only.csv",quote = FALSE)
 
-results <- go.repem.only@result
+results <- go.stareg.only@result
 results <- results[sample(nrow(results)),]
 results <- results[,c("ID","ONTOLOGY", "pvalue", "Count", "Description")]
 results[,"Category"] = NA
@@ -239,8 +239,8 @@ don <- results %>%
 
 axisdf = don %>% group_by(ONTOLOGY) %>% summarize(center=(max(BPcum) + min(BPcum))/2)
 annotated = c("neuron to neuron synapse", "modulation of chemical synaptic transmission", "regulation of trans-synaptic signalling",
-              "regulation of membrane potential", "synaptic vesicle", "neurotransmitter transport",
-              "signal release from synapse", "regulation of synaptic plasticity", "structural constituent of synapse")
+              "regulation of membrane potential", "synaptic vesicle", "neurotransmitter transport", "regulation of nervous system development",
+              "signal release from synapse", "dendritic shaft")
 
 
 ggplot(don, aes(x = BPcum, y=-log10(pvalue))) +
@@ -249,7 +249,7 @@ ggplot(don, aes(x = BPcum, y=-log10(pvalue))) +
                       values = c("BP"="Tan", "CC"="DarkSeaGreen", "MF"="#6496D2")) +
   scale_x_continuous(label = axisdf$ONTOLOGY, breaks= axisdf$center) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 13.5)) +     # remove space between plot area and x axis
-  geom_hline(yintercept = -log10(0.0037), color = '#545454', size= 1.2, linetype = "dashed") +
+  geom_hline(yintercept = -log10(0.004), color = '#545454', size= 1.2, linetype = "dashed") +
   guides(color = "none") +
   theme_bw() +
   theme(
@@ -269,34 +269,3 @@ ggplot(don, aes(x = BPcum, y=-log10(pvalue))) +
     aes(label = Description),
     size = 4,
     segment.color = "black", show.legend = FALSE)
-
-##--------------------------------------------------------------------
-## KEGG enrichment analysis
-##--------------------------------------------------------------------
-# install.packages('R.utils')
-R.utils::setOption( "clusterProfiler.download.method",'auto')
-library(cowplot)
-
-genes.overlap    <- intersect(genes_rep_repem, genes_rep_bh) # overlap between STAREG and BH
-genes.repem.only  <- genes_rep_repem[!genes_rep_repem%in%genes.overlap]
-genes_repem_only <- bitr(genes.repem.only, fromType = "SYMBOL", toType = c("ENTREZID"), OrgDb = org.Mm.eg.db)
-kegg.repem.only <- enrichKEGG(gene         = genes_repem_only$ENTREZID,
-                              organism     = 'mmu',
-                              universe     = genes.all$ENTREZID,
-                              pvalueCutoff = 0.9,
-                              qvalueCutoff =0.9)
-sum(kegg.repem.only$p.adjust<0.05) # 24
-
-sig.kegg <- filter(kegg.repem.only, p.adjust<.05)
-dim(sig.kegg)
-kegg.bar <- barplot(sig.kegg,showCategory=20,color = "pvalue")
-kegg.dot <- dotplot(sig.kegg,showCategory=20,color = "pvalue") + 
-  theme( 
-    legend.position = c(0.98,0.02),
-    legend.justification = c(0.98,0.02),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank() 
-  ) + scale_color_continuous()
-
-
-

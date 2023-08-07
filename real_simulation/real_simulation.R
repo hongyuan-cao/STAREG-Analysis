@@ -4,8 +4,11 @@
 library(SPARK)
 library(STAREG)
 library(ggplot2)
+library(radjust)
+library(JUMP)
 
 source('funcs/SimuFunc.R')
+source('funcs/methods.R')
 
 n.rep    = 10
 tau1     = 0.2
@@ -20,7 +23,7 @@ xi10 = 0.05
 xi11 = 0.05
 alphas = seq(0, 0.1, 0.01)
 
-methods <- c("MaxP", "BH", "STAREG")
+methods <- c("MaxP", "BH", "STAREG", "JUMP", "radjust", "MaRR", "IDR")
 
 data.obj <- list()
 res <- list()
@@ -52,22 +55,26 @@ for (i in 1: n.rep){
   
   truth = states1 * states2
   
-  # BH
+  # Ad hoc BH
   pvals1.bh <- p.adjust(pvals1, method = "BH")
   pvals2.bh <- p.adjust(pvals2, method = "BH")
   
   # MaxP
   maxp <- apply(cbind(pvals1, pvals2), 1, max)
   pvals.maxp <- p.adjust(maxp, method = "BH")
+
+  # MaRR
+  rank.p <- rbind(rank(pvals1), rank(pvals2))
+  max.rank = apply(cbind(rank.p[1,],rank.p[2,]),1,max)
   
   # STAREG
-  res.rep <- stareg(pvals1, pvals2, init.pi0 = FALSE)
+  res.rep <- stareg(pvals1, pvals2)
   pvals.rep <- res.rep$fdr
   
   for(j in 1:length(alphas)){
     alpha = alphas[j]
     
-    # BH
+    # Ad hoc BH
     res$BH$fdp[i,j] <- sum(pvals1.bh <= alpha & pvals2.bh <= alpha & !truth)/max(sum(pvals1.bh <= alpha & pvals2.bh <= alpha), 1)
     res$BH$pd[i,j] <- sum(pvals1.bh <= alpha & pvals2.bh <= alpha & truth) / sum(truth)
     
@@ -78,6 +85,32 @@ for (i in 1: n.rep){
     # STAREG
     res$STAREG$fdp[i,j] <- sum(pvals.rep <= alpha & !truth)/max(sum(pvals.rep <= alpha), 1)
     res$STAREG$pd[i,j] <- sum(pvals.rep <= alpha & truth) / sum(truth)
+
+    # JUMP
+    jump.obj <- JUMP(pvals1, pvals2, alpha)
+    jump.thr <- jump.obj$jump.thr
+    p.max <- jump.obj$p.max
+    res$JUMP$fdp[i,j] <- sum(p.max <= jump.thr & !truth)/max(sum(p.max <= jump.thr), 1)
+    res$JUMP$pd[i,j] <- sum(p.max <= jump.thr & truth) / sum(truth)
+    
+    # MaRR
+    res.marr <- MaRR(max.rank, alpha = alpha)
+    marr.rej <- rep(0, m)
+    marr.rej[res.marr$which.sig] = 1
+    res$MaRR$fdp[i,j] <- sum(marr.rej & !truth)/ max(sum(marr.rej), 1)
+    res$MaRR$pd[i,j] <- sum(marr.rej & truth) / sum(truth)
+    
+    # Bogomolov & Heller 2018 (JASA)
+    pa = pvals1
+    pb = pvals2
+    pa[which(pa==0)] <- 1e-15
+    pb[which(pb==0)] <- 1e-15
+    res.rv18 <- radjust_sym(pa, pb, input_type = "all", directional_rep_claim = FALSE,
+                            variant = "adaptive", alpha = alpha)
+    rv18 <- rep(1, m)
+    rv18[as.numeric(res.rv18$results_table$name)] <- res.rv18$results_table$r_value
+    res$radjust$fdp[i,j] <- sum(rv18 <= alpha & !truth)/max(sum(rv18 <= alpha), 1)
+    res$radjust$pd[i,j] <- sum(rv18 <= alpha & truth) / sum(truth)
   }
 }
 
@@ -85,67 +118,3 @@ for (k in 1:length(methods)){
   res[[k]]$fdr <- colMeans(res[[k]]$fdp)
   res[[k]]$pwr <- colMeans(res[[k]]$pd)
 }
-
-##------------------------------------------------------------------------------
-## FDR plot
-##------------------------------------------------------------------------------
-fdr.STAREG <- as.data.frame(cbind(alpha = alphas, fdr = res$STAREG$fdr))
-fdr.MaxP <- as.data.frame(cbind(alpha = alphas, fdr = res$MaxP$fdr))
-fdr.BH <- as.data.frame(cbind(alpha = alphas, fdr = res$BH$fdr))
-
-fdr.BH$method <- "BH"
-fdr.MaxP$method <- "MaxP"
-fdr.STAREG$method <- "STAREG"
-
-res.fdr <- rbind(fdr.STAREG, fdr.MaxP, fdr.BH)
-
-# 4*4.2 inches
-ggplot(res.fdr, aes(alpha, fdr, group = method, color = method, shape = method)) +
-  scale_colour_manual(name="",
-                      values = c("MaxP"="#6496D2", "BH"="#F4B183", "STAREG"="#8FBC8F")) +
-  scale_x_continuous(limits = c(0, 0.1), breaks = seq(0,0.1,0.02)) +
-  scale_y_continuous(limits = c(0, 0.16), breaks = seq(0,0.16,0.02)) +
-  geom_line(size = 1.5) + xlab("Target FDR level") + ylab("Empirical FDR") +
-  theme_bw() +
-  geom_abline(intercept = 0, slope = 1, colour = "#44546A", size = 1, linetype = 2) +
-  theme(legend.position = c(0.01,1.03),  # legend.position = "none"
-        panel.border = element_blank(),
-        axis.title.x = element_text(size = 16),
-        axis.title.y = element_text(size = 16),
-        axis.text.x = element_text(size = 15),
-        axis.text.y = element_text(size = 15),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.line = element_line(size = 0.6, linetype = "solid"))
-
-##------------------------------------------------------------------------------
-## Power plot
-##------------------------------------------------------------------------------
-pwr.STAREG <- as.data.frame(cbind(alpha = alphas, pwr = res$STAREG$pwr))
-pwr.MaxP <- as.data.frame(cbind(alpha = alphas, pwr = res$MaxP$pwr))
-pwr.BH <- as.data.frame(cbind(alpha = alphas, pwr = res$BH$pwr))
-
-pwr.BH$method <- "BH"
-pwr.MaxP$method <- "MaxP"
-pwr.STAREG$method <- "STAREG"
-
-res.pwr <- rbind(pwr.STAREG, pwr.MaxP, pwr.BH)
-
-library(ggplot2)
-# 4*4.2 inches
-ggplot(res.pwr, aes(alpha, pwr, group = method, color = method, shape = method)) +
-  scale_colour_manual(name="",
-                      values = c("MaxP"="#6496D2", "BH"="#F4B183", "STAREG"="#8FBC8F")) +
-  scale_x_continuous(limits = c(0, 0.1), breaks = seq(0,0.1,0.02)) +
-  scale_y_continuous(limits = c(0, 1), breaks = seq(0,1,0.1)) +
-  geom_line(size = 1.5) + xlab("Target FDR level") + ylab("Power") +
-  theme_bw() +
-  theme(legend.position = "none",  # legend.position = c(0.01,1.03)
-        panel.border = element_blank(),
-        axis.title.x = element_text(size = 16),
-        axis.title.y = element_text(size = 16),
-        axis.text.x = element_text(size = 15),
-        axis.text.y = element_text(size = 15),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.line = element_line(size = 0.6, linetype = "solid"))

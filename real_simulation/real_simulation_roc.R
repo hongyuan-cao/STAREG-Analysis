@@ -3,7 +3,6 @@ library(STAREG)
 library(ggplot2)
 
 source('./funcs/SimuFunc.R')
-source("./funcs/ROC_funcs.R")
 
 tau1     = 0.5
 tau2     = 0.8
@@ -35,7 +34,7 @@ p2 <- data.obj$pvals2
 states1 <- data.obj$truth1
 states2 <- data.obj$truth2
 
-# BH
+# Ad hoc BH
 padj1.bh <- p.adjust(p1, method = 'BH')
 padj2.bh <- p.adjust(p2, method = 'BH')
 
@@ -46,38 +45,49 @@ padj.maxp <- p.adjust(maxp, method = "BH")
 # STAREG
 res.rep <- stareg(p1, p2, init.pi0 = FALSE)
 padj.rep <- res.rep$fdr
-f1.rep = res.rep$f1
-f2.rep = res.rep$f2
-xi00.hat = res.rep$xi00
-xi01.hat = res.rep$xi01
-xi10.hat = res.rep$xi10
-xi11.hat = res.rep$xi11
 
 ##--------------------------------------------------------------------
+library(ggplot2)
+source("R/ROC_funcs.R")
+source("R/methods.R")
 rroc.bh <- revisedROC2(states1*states2, padj1.bh, padj2.bh)
 rroc.maxp <- revisedROC(states1*states2, padj.maxp)
 rroc.rep <- revisedROC(states1*states2, padj.rep)
+rroc.marr <- revisedROC_marr(states1*states2, p1, p2)
+rroc.radjust <- revisedROC_radjust(states1*states2, p1, p2)
+rroc.jump <- revisedROC_jump(states1*states2, p1, p2)
 
 rroc.bh <- as.data.frame(rroc.bh)
 rroc.maxp <- as.data.frame(rroc.maxp)
 rroc.rep <- as.data.frame(rroc.rep)
+rroc.marr <- as.data.frame(rroc.marr)
+rroc.radjust <- as.data.frame(rroc.radjust)
+rroc.jump <- as.data.frame(rroc.jump)
 
-rroc.bh$method <- "BH"
+rroc.bh$method <- "Ad hoc BH"
 rroc.maxp$method <- "MaxP"
 rroc.rep$method <- "STAREG"
+rroc.marr$method <- "MaRR"
+rroc.radjust$method <- "radjust"
+rroc.jump$method <- "JUMP"
 
-res <- rbind(rroc.maxp, rroc.bh, rroc.rep)
+res <- rbind(rroc.maxp, rroc.bh, rroc.rep, rroc.marr, rroc.radjust, rroc.jump)
 
-ggplot(res, aes(fdr,tpr, group = method, color = method, shape = method)) +
-  scale_colour_manual(name="",
-                      values = c("MaxP"="#6496D2", "BH"="#F4B183", "STAREG"="#8FBC8F")) +
+ggplot(res, aes(fdr,tpr, group = method, color = method)) + 
+  # geom_point() + 
+  scale_colour_manual(name="",  
+                      values = c("STAREG"="#8FBC8F", "JUMP"="#9370DB", "MaxP"="#6496D2", "Ad hoc BH"="#ED7D31", "radjust" = "#FFC000", "MaRR" = "#A5A5A5")) +
   scale_x_continuous(limits = c(0, 1)) +
-  scale_y_continuous(limits = c(0, 1)) +
-  geom_line(size = 1.5) + xlab("Empirical FDR") + ylab("Power") +
-  theme_bw() +
+  scale_y_continuous(limits = c(0, 1)) + 
+  geom_line(size = 1.5, aes(linetype = method)) + scale_linetype(guide =F) +
+  # geom_line(size = 1.5) + 
+  # scale_linetype_manual(values = c("solid", "dashed", "longdash", "twodash", "dotted", "dotdash")) +
+  xlab("Empirical FDR") + ylab("Power") +
+  theme_bw() + 
   geom_abline(intercept = 0, slope = 1, colour = "#44546A", size = 1, linetype = 2) +
-  theme(legend.position = "none", # legend.position = c(0.01,1.03)
+  theme(legend.position = "bottom",
         panel.border = element_blank(),
+        legend.text = element_text(size = 16),
         axis.title.x = element_text(size = 16),
         axis.title.y = element_text(size = 16),
         axis.text.x = element_text(size = 15),

@@ -8,7 +8,7 @@ load("./output/MOB.RData") # obtained from https://drive.google.com/file/d/1kUr8
 source("./funcs/ValidationFuncs.R")
 library(spdep)
 
-genes.overlap    <- intersect(genes_rep_repem, genes_rep_bh) 
+genes.overlap <- unique(c(genes_rep_maxp, genes_rep_bh, genes_rep_jump, genes_rep_marr, genes_rep_radjust))
 genes.repem.only  <- genes_rep_repem[!genes_rep_repem%in%genes.overlap]
 
 # Rep1
@@ -81,13 +81,11 @@ grid.arrange(grobs = MBP[numC:1], nrow = 3) # 8.5 * 4.75 inches
 ## Spatial expression patterns of randomly selected SVGs
 ##--------------------------------------------------------------------
 source("funcs/PlotFuncs.R")
-genes.overlap    <- intersect(genes_rep_repem, genes_rep_bh) 
-genes.repem.only  <- genes_rep_repem[!genes_rep_repem%in%genes.overlap]
 
-randi <- sample(length(genes.repem.only), 20, replace = FALSE)
-gene_plot <- genes.repem.only[randi]
+randi <- sample(length(genes_rep_repem), 20, replace = FALSE)
+gene_plot <- genes_rep_repem[randi]
 
-# gene_plot <- c("Slc6a13", "Cbln4", "Clip4") # three representative SVGs only identified by STAREG
+# gene_plot <- c("Sox5", "Vsnl1", "Smarcd1") # three representative SVGs only identified by STAREG
 
 # Rep1
 vst_ct <- var_stabilize(counts1) # R function in funcs.R
@@ -153,16 +151,20 @@ ggplot(df, aes(x = UMAP1, y = UMAP2, color = Cluster), color = labels) +
 library(rjson)
 library(stringr)
 bh.only    <- genes_rep_bh[!genes_rep_bh%in%genes_rep_maxp]
-repem.only <- genes_rep_repem[!genes_rep_repem%in%genes_rep_maxp]
+radjust.only <- genes_rep_radjust[!genes_rep_radjust%in%genes_rep_maxp]
+jump.only <- genes_rep_jump[!genes_rep_jump%in%genes_rep_maxp]
+marr.only <- genes_rep_marr[!genes_rep_marr%in%genes_rep_maxp]
+stareg.only <- genes_rep_stareg[!genes_rep_stareg%in%genes_rep_maxp]
 
 ## The highlighted marker genes in the original study
 spatial.genes <- c("Doc2g", "Slc17a7", "Reln", "Cdhr1", "Sv2b", "Shisa3", "Plcxd2", "Nmb", "Uchl1", "Rcan2")
 length(intersect(genes_rep_maxp, spatial.genes)) # 7/559
-length(intersect(genes_rep_bh, spatial.genes)) # 7/618
-length(intersect(genes_rep_repem, spatial.genes)) # 9/1175
 
 length(intersect(bh.only, spatial.genes)) # 0/59
-length(intersect(repem.only, spatial.genes)) # 2/616
+length(intersect(radjust.only, spatial.genes)) # 2/233
+length(intersect(jump.only, spatial.genes)) # 1/296
+length(intersect(marr.only, spatial.genes)) # 0/400
+length(intersect(repem.only, spatial.genes)) # 2/597
 
 ## Genes related to the main olfactory bulb in Harmonizome database: Allen Brain Atlas
 library(rjson)
@@ -178,34 +180,12 @@ Allen.genes <- tolower(Allen.genes)
 Allen.genes <- str_to_title(Allen.genes) # 1894
 
 length(intersect(genes_rep_maxp, Allen.genes)) # 125/559
-length(intersect(genes_rep_bh, Allen.genes)) # 132/618
-length(intersect(genes_rep_repem, Allen.genes)) # 216/1175
 
-length(intersect(bh.only, Allen.genes)) # 7/59
-length(intersect(repem.only, Allen.genes)) # 91/616
-
-
-## Genes relative to olfactorybulb: BioGPS
-Harmonizome_BioGPS <- fromJSON(paste(readLines("./validation/mouse olfactory bulb/Harmonizome_BioGPS.json")))
-Harmonizome_BioGPS <- Harmonizome_BioGPS[["associations"]]
-
-BioGPS.genes <- NULL
-BioGPS.pvalue <- NULL
-for (i in 1:length(Harmonizome_BioGPS)){
-  BioGPS.genes <- c(BioGPS.genes, Harmonizome_BioGPS[[i]][["gene"]][["symbol"]])
-  BioGPS.pvalue <- c(BioGPS.pvalue, 10^(-abs(Harmonizome_BioGPS[[i]][["standardizedValue"]])))
-}
-names(BioGPS.pvalue) <- BioGPS.genes
-BioGPS.genes <- BioGPS.genes[!duplicated(BioGPS.genes)]
-BioGPS.genes <- tolower(BioGPS.genes)
-BioGPS.genes <- str_to_title(BioGPS.genes) # 2031
-
-length(intersect(genes_rep_maxp, BioGPS.genes)) # 191/559
-length(intersect(genes_rep_bh, BioGPS.genes)) # 203/618
-length(intersect(genes_rep_repem, BioGPS.genes)) # 315/1175
-
-length(intersect(bh.only, BioGPS.genes)) # 12/59
-length(intersect(repem.only, BioGPS.genes)) # 124/616
+length(intersect(bh.only, Allen.genes)) # 7/59 11.86%
+length(intersect(radjust.only, Allen.genes)) # 31/233 13.30%
+length(intersect(jump.only, Allen.genes)) # 34/296  11.49%
+length(intersect(marr.only, Allen.genes)) # 61/400  15.25%
+length(intersect(repem.only, Allen.genes)) # 88/597 14.74%
 
 ##--------------------------------------------------------------------
 ## GO enrichment analysis
@@ -218,8 +198,6 @@ library(ggrepel)
 # options(connectionObserver = NULL) # run if library(org.Mm.eg.db) failed
 
 genes.all <- bitr(overlap, fromType = "SYMBOL", toType = c("ENTREZID"), OrgDb = org.Mm.eg.db)
-genes.overlap    <- intersect(genes_rep_repem, genes_rep_bh)
-genes.repem.only  <- genes_rep_repem[!genes_rep_repem%in%genes.overlap]
 genes_repem_only <- bitr(genes.repem.only, fromType = "SYMBOL", toType = c("ENTREZID"), OrgDb = org.Mm.eg.db)
 go.repem.only <- enrichGO(gene          = genes_repem_only$ENTREZID,
                           universe      = genes.all$ENTREZID,
@@ -231,9 +209,6 @@ go.repem.only <- enrichGO(gene          = genes_repem_only$ENTREZID,
                           readable      = TRUE,
                           pool=TRUE)
 sum(go.repem.only$p.adjust<0.05) # 245
-# sig.go <- filter(go.repem.only, p.adjust<.05)
-# dotplot(sig.go,showCategory = 245, size = NULL,font.size = 10, title = "GO enrichment", split = "ONTOLOGY") + facet_grid(ONTOLOGY ~ ., scales = "free")
-# barplot(sig.go,showCategory = 245, size = NULL,font.size = 10, title = "GO enrichment", split = "ONTOLOGY") + facet_grid(ONTOLOGY ~ ., scales = "free")
 
 write.csv(go.repem.only,file = "output/MOB_go_repem_only.csv",quote = FALSE)
 
@@ -269,9 +244,9 @@ don <- results %>%
   mutate(BPcum=BP+tot)
 
 axisdf = don %>% group_by(ONTOLOGY) %>% summarize(center=(max(BPcum) + min(BPcum))/2)
-annotated = c("extracellular space", "trans-synaptic signaling", "chemical synaptic transmission",
-              "collagen-containing extracellular matrix", "cell adhesion molecule binding", "sensory perception",
-              "dendrite", "neuronal cell body", "presynapse", "dopamine receptor binding")
+annotated = c("integrin binding", "extracellular space", "collagen-containing extracellular matrix", "side of membrane",
+              "G protein-coupled receptor signaling pathway", "external encapsulating structure", "extracellular matrix",
+              "cytokine binding")
 
 ggplot(don, aes(x = BPcum, y=-log10(pvalue))) +
   geom_point(aes(color = as.factor(ONTOLOGY), size = Count), alpha=0.8) +
@@ -299,36 +274,3 @@ ggplot(don, aes(x = BPcum, y=-log10(pvalue))) +
     aes(label = Description),
     size = 4,
     segment.color = "black", show.legend = FALSE)
-
-
-##--------------------------------------------------------------------
-## KEGG enrichment analysis
-##--------------------------------------------------------------------
-# install.packages('R.utils')
-R.utils::setOption( "clusterProfiler.download.method",'auto')
-library(cowplot)
-
-genes.overlap    <- intersect(genes_rep_repem, genes_rep_bh) 
-genes.repem.only  <- genes_rep_repem[!genes_rep_repem%in%genes.overlap]
-genes_repem_only <- bitr(genes.repem.only, fromType = "SYMBOL", toType = c("ENTREZID"), OrgDb = org.Mm.eg.db)
-kegg.repem.only <- enrichKEGG(gene         = genes_repem_only$ENTREZID,
-                              organism     = 'mmu',
-                              universe     = genes.all$ENTREZID,
-                              pvalueCutoff = 0.9,
-                              qvalueCutoff =0.9)
-sum(kegg.repem.only$p.adjust<0.05) # 11
-
-sig.kegg <- filter(kegg.repem.only, p.adjust<.05)
-dim(sig.kegg)
-kegg.bar <- barplot(sig.kegg,showCategory=20,color = "pvalue")
-par(mar = c(4, 4.5, 0.5, 1))
-kegg.dot <- dotplot(sig.kegg,showCategory=20,color = "pvalue") + 
-  theme( 
-    legend.position = c(0.98,0.02),
-    legend.justification = c(0.98,0.02),
-    axis.text.y = element_text(size = 15),
-    axis.text.x = element_text(size = 12), # face = "bold",
-    axis.title = element_text(size = 15),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank() 
-  ) + scale_color_continuous()
